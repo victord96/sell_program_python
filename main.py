@@ -1,20 +1,32 @@
 import sys
+import csv
+import os
 
 
-clients = [
-    {
-        'name': 'Pablo',
-        'company': 'Google',
-        'email': 'pablo@google.com',
-        'position': 'Software engineer',
-    },
-    {
-        'name': 'Ricardo',
-        'company': 'Facebook',
-        'email': 'ricardo@facebook.com',
-        'position': 'Data engineer',
-    }
-]
+CLIENT_TABLE = '.clients.csv'
+CLIENT_SCHEMA = ['name', 'company', 'email', 'position']
+clients = []
+
+
+def _initialize_clients_from_storage():
+    with open(CLIENT_TABLE, mode='r') as f:
+        reader = csv.DictReader(f, fieldnames=CLIENT_SCHEMA)
+
+
+        for row in reader:
+            clients.append(row)
+
+
+def _save_clients_to_storage():
+    tmp_table_name = '{}.tmp'.format(CLIENT_TABLE)
+    with open(tmp_table_name, mode='w') as f:
+        writer = csv.DictWriter(f, fieldnames=CLIENT_SCHEMA)
+        writer.writerows(clients)
+
+        f.close()
+        os.remove(CLIENT_TABLE)
+        os.rename(tmp_table_name, CLIENT_TABLE)
+
 
 def search_id():
 
@@ -112,23 +124,11 @@ def _get_client_field(field_name):
         field = input(f'What is the client {field_name}? ')
     return field
 
-def _get_client_name():
-    client_name = None
-
-    while not client_name:
-        client_name = input('What is the client name? ').strip()
-
-        if client_name == 'exit':
-            client_name = None
-            break
-
-    if not client_name:
-        sys.exit()
-
-    return client_name
-
 
 if __name__ == '__main__':
+
+    _initialize_clients_from_storage()
+
     _print_welcome()
 
     command = input()
@@ -137,21 +137,20 @@ if __name__ == '__main__':
     if command == 'C':
         client = fill_client()
         create_client(client)
-        list_clients()
 
     elif command == 'L':
         list_clients()    
 
     elif command == 'U':
         update_client()
-        list_clients()
         
     elif command == 'D':
         delete_client()
-        list_clients()
 
     elif command == 'S':
         search_client()
 
     else:
         print('Invalid command')
+
+    _save_clients_to_storage()    
